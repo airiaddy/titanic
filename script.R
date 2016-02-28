@@ -1,7 +1,7 @@
-dataRow.train <- read.csv(file="C:/Users/evalinalisbeth/Documents/Titanic/train.csv", sep=",", header=T)
-dataRow.test <- read.csv(file="C:/Users/evalinalisbeth/Documents/Titanic/test.csv", sep=",", header=T)
+dataRow.train <- read.csv(file="train.csv", sep=",", header=T)
+dataRow.test <- read.csv(file="test.csv", sep=",", header=T)
 
-data.train <- model.frame(~ Survived + Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.train)
+data.train <- model.frame(~ Survived + Name + Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.train)
 data.test <- model.frame(~  Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.test)
 
 dataRow.name <- model.frame(~ Name + Age, data = dataRow.train)
@@ -19,7 +19,7 @@ Mrs_age <- 0
 n_Mrs <- 0
 
 chars_Master <- "Master"
-Mrs_age <- 0
+Master_age <- 0
 n_Master <- 0
 
 for (i in 1:nrow(dataRow.name)){
@@ -39,9 +39,36 @@ for (i in 1:nrow(dataRow.name)){
   }
   
   if (grepl(chars_Master,dataRow.name$Name[i])==TRUE){
-    Master_age = Master_age+dataRow.name$Master[i]
+    Master_age = Master_age+dataRow.name$Age[i]
     n_Master = n_Master+1
   }
 }
 
 miss_age_average = miss_age/n_miss
+mr_age_average = mr_age/n_mr
+Mrs_age_average = Mrs_age/n_Mrs
+master_age_average = Master_age/n_Master
+
+miss_age_average = round(miss_age_average, digits = 2)
+mr_age_average = round(mr_age_average, digits = 2)
+Mrs_age_average = round(Mrs_age_average, digits = 2)
+master_age_average = round(master_age_average=2)
+
+for (i in 1:nrow(data.train)){
+  if (is.na(data.train$Age[i])==TRUE){
+    if (grepl(chars_miss,data.train$Name[i])==TRUE){
+      data.train$Age[i] <- miss_age_average
+    }else if (grepl(chars_mr,data.train$Name[i])==TRUE){
+      data.train$Age[i] <- mr_age_average
+    }else if (grepl(chars_Mrs,data.train$Name[i])==TRUE){
+      data.train$Age[i] <- Mrs_age_average
+    }else if (grepl(chars_Master,data.train$Name[i])==TRUE){
+      dataRow.train$Age[i] <- master_age_average
+    }
+  }
+}
+
+library(randomForest)
+
+forestfit <- randomForest(Survived ~ Pclass + Sex + Age + SibSp + Fare + Embarked, data = data.train)
+forestfit
