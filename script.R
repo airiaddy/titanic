@@ -20,7 +20,7 @@ n_Mrs <- 0
 
 chars_Master <- "Master"
 Mrs_age <- 0
-n_Mrs <- 0
+n_Master <- 0
 
 for (i in 1:nrow(dataRow.name)){
   if (grepl(chars_miss,dataRow.name$Name[i])==TRUE){
