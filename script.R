@@ -1,8 +1,6 @@
 dataRow.train <- read.csv(file="train.csv", sep=",", header=T)
 dataRow.test <- read.csv(file="test.csv", sep=",", header=T)
 
-#data.train <- model.frame(~ Survived + Name + Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.train)
-#data.test <- model.frame(~  Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.test)
 
 dataRow.name <- model.frame(~ Name + Age, data = dataRow.train)
 
@@ -81,9 +79,20 @@ for (i in 1:nrow(dataRow.train)){
 }
 
 #cek missing value
-MS=is.na.data.frame(dataRow.train$Age)
-Missing_value=data.frame(t(MS))
+#MS=is.na.data.frame(dataRow.train$Age)
+#Missing_value=data.frame(t(MS))
+data.train <- model.frame(~ Survived + Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.train)
+data.test <- model.frame(~  Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.test)
+
+for (i in 1:nrow(data.train)){
+  if (data.train$Survived[i]==1){
+    data.train$Survived[i]<-"YES"
+  }else{
+    data.train$Survived[i]<-"No"
+  }
+}
+
 library(randomForest)
 
-forestfit <- randomForest(Survived ~ Pclass + Sex + Age + SibSp + Fare + Embarked, data = data.train)
+forestfit <- randomForest(Survived ~ ., data.train, ntree=50,norm.votes=FALSE,importance=TRUE)
 forestfit
