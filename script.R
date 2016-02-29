@@ -22,6 +22,9 @@ chars_Master <- "Master"
 Master_age <- 0
 n_Master <- 0
 
+all_age <- 0
+n_all <- 0
+
 for (i in 1:nrow(dataRow.name)){
   if (grepl(chars_miss,dataRow.name$Name[i])==TRUE){
     miss_age = miss_age+dataRow.name$Age[i]
@@ -42,17 +45,24 @@ for (i in 1:nrow(dataRow.name)){
     Master_age = Master_age+dataRow.name$Age[i]
     n_Master = n_Master+1
   }
+  
+  all_age = all_age+dataRow.name$Age[i]
+  n_all = n_all+1
+  
 }
 
 miss_age_average = miss_age/n_miss
 mr_age_average = mr_age/n_mr
 Mrs_age_average = Mrs_age/n_Mrs
 master_age_average = Master_age/n_Master
+all_average <- all_age/n_all
+
 
 miss_age_average = round(miss_age_average, digits = 2)
 mr_age_average = round(mr_age_average, digits = 2)
 Mrs_age_average = round(Mrs_age_average, digits = 2)
-master_age_average = round(master_age_average=2)
+master_age_average = round(master_age_average, digits=2)
+all_average = round(all_average, digits=2)
 
 for (i in 1:nrow(dataRow.train)){
   if (is.na(dataRow.train$Age[i])==TRUE){
@@ -64,9 +74,12 @@ for (i in 1:nrow(dataRow.train)){
       dataRow.train$Age[i] <- Mrs_age_average
     }else if (grepl(chars_Master,dataRow.train$Name[i])==TRUE){
       dataRow.train$Age[i] <- master_age_average
+    }else{
+      dataRow.train$Age[i] <- all_average
     }
   }
 }
+
 #cek missing value
 MS=is.na.data.frame(dataRow.train$Age)
 Missing_value=data.frame(t(MS))
