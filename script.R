@@ -78,21 +78,22 @@ for (i in 1:nrow(dataRow.train)){
   }
 }
 
+
 #cek missing value
 #MS=is.na.data.frame(dataRow.train$Age)
 #Missing_value=data.frame(t(MS))
 data.train <- model.frame(~ Survived + Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.train)
 data.test <- model.frame(~  Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.test)
 
-for (i in 1:nrow(data.train)){
-  if (data.train$Survived[i]==1){
-    data.train$Survived[i]<-"YES"
-  }else{
-    data.train$Survived[i]<-"No"
+for (i in 1:nrow(data.train)){ 
+  if (!grepl("C",data.train$Embarked[i]) && !grepl("Q",data.train$Embarked[i]) && !grepl("S",data.train$Embarked[i])){ 
+    data.train$Embarked[i] <- "S"
   }
 }
 
+data.train$Survived <- as.factor(data.train$Survived)
+
 library(randomForest)
 
-forestfit <- randomForest(Survived ~ ., data.train, ntree=50,norm.votes=FALSE,importance=TRUE)
+forestfit <- randomForest(Survived ~ ., data.train, ntree=5000)
 forestfit
