@@ -163,11 +163,12 @@ forest.predicted <- predict(forestfit,data.test)
 
 #SVM
 library(e1071)
-svm.model <- svm(Survived ~ ., data.train)
+svm.model <- svm(Survived ~ ., data.train,
+                 gamma = 2, cost = 1)
 svm.train.predicted <- predict(svm.model,data.train)
 table(true = data.train$Survived, pred = svm.train.predicted)
 svm.test.predicted <- predict(svm.model,data.test)
 
 
 result <- model.frame(~ PassengerId, data = dataRow.test)
-result$Survived <- predicted
+#result$Survived <- predicted
