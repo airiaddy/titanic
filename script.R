@@ -1,4 +1,3 @@
-
 #read train & test file to table
 dataRow.train <- read.csv(file="train.csv", sep=",", header=T)
 dataRow.test <- read.csv(file="test.csv", sep=",", header=T)
@@ -101,34 +100,35 @@ for (i in 1:nrow(dataRow.train)){
       dataRow.train$Age[i] <- all_average
     }
   }
+  
+  if (dataRow.train$Fare[i]==0){
+    if (dataRow.train$Pclass[i]==1){
+      dataRow.train$Fare[i] <- mean_fare_1
+    } else if (dataRow.train$Pclass[i]==2){
+      dataRow.train$Fare[i] <- mean_fare_2
+    } else {
+      dataRow.train$Fare[i] <- mean_fare_3
+    }
+  }
+  
+  if (!grepl("C",dataRow.train$Embarked[i]) && !grepl("Q",dataRow.train$Embarked[i]) && !grepl("S",dataRow.train$Embarked[i])){ 
+    dataRow.train$Embarked[i] <- "S"
+  }
 }
 
 
 #cek missing value
 #MS=is.na.data.frame(dataRow.train$Age)
 #Missing_value=data.frame(t(MS))
+
 data.train <- model.frame(~ Survived + Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.train)
-
-for (i in 1:nrow(data.train)){ 
-  if (!grepl("C",data.train$Embarked[i]) && !grepl("Q",data.train$Embarked[i]) && !grepl("S",data.train$Embarked[i])){ 
-    data.train$Embarked[i] <- "S"
-  }
-}
-
 data.train$Survived <- as.factor(data.train$Survived)
-
-summary(data.train)
-
-library(randomForest)
-
-forestfit <- randomForest(Survived ~ ., data.train, ntree=5000)
-forestfit
-
+data.train$Embarked <- factor(data.train$Embarked)
 
 for (i in 1:nrow(dataRow.test)){
   if (is.na(dataRow.test$Age[i])==TRUE){
     if (grepl(chars_miss,dataRow.test$Name[i])==TRUE){
-      dataRow.train$Age[i] <- miss_age_average
+      dataRow.test$Age[i] <- miss_age_average
     }else if (grepl(chars_mr,dataRow.test$Name[i])==TRUE){
       dataRow.test$Age[i] <- mr_age_average
     }else if (grepl(chars_Mrs,dataRow.test$Name[i])==TRUE){
@@ -139,10 +139,8 @@ for (i in 1:nrow(dataRow.test)){
       dataRow.test$Age[i] <- all_average
     }
   }
-}
-
-for (i in 1:nrow(dataRow.test)){
-  if (is.na(dataRow.test$Fare[i])==TRUE){
+  
+  if (dataRow.test$Fare[i]==0 || is.na(dataRow.test$Fare[i])){
     if (dataRow.test$Pclass[i]==1){
       dataRow.test$Fare[i]<-mean_fare_1
     } else if (dataRow.test$Pclass[i]==2){
@@ -152,6 +150,15 @@ for (i in 1:nrow(dataRow.test)){
     }
   }
 }
-
 data.test <- model.frame(~  Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.test)
 
+summary(data.train)
+summary(data.test)
+
+library(randomForest)
+forestfit <- randomForest(Survived ~ ., data.train, ntree=5000, mtry=3)
+forestfit
+predicted <- predict(forestfit,data.test)
+
+result <- model.frame(~ PassengerId, data = dataRow.test)
+result$Survived <- predicted
