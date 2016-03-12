@@ -155,10 +155,19 @@ data.test <- model.frame(~  Pclass + Sex + Age + SibSp + Fare + Embarked, data =
 summary(data.train)
 summary(data.test)
 
+#Random forest
 library(randomForest)
 forestfit <- randomForest(Survived ~ ., data.train, ntree=5000, mtry=3)
 forestfit
-predicted <- predict(forestfit,data.test)
+forest.predicted <- predict(forestfit,data.test)
+
+#SVM
+library(e1071)
+svm.model <- svm(Survived ~ ., data.train)
+svm.train.predicted <- predict(svm.model,data.train)
+table(true = data.train$Survived, pred = svm.train.predicted)
+svm.test.predicted <- predict(svm.model,data.test)
+
 
 result <- model.frame(~ PassengerId, data = dataRow.test)
 result$Survived <- predicted
