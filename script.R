@@ -49,6 +49,24 @@ for (i in 1:nrow(dataRow.name)){
   
 }
 
+fare_3 <- 0
+
+fare_2 <- 0
+
+fare_1 <- 0
+
+for (i in 1:nrow(dataRow.name)){
+  if (dataRow.train$Pclass[i]==3){
+    fare_3 = fare_3+dataRow.train$Fare
+  }
+  if (dataRow.train$Pclass[i]==2){
+    fare_2 = fare_2+dataRow.train$Fare
+  }
+  if (dataRow.train$Pclass[i]==1){
+    fare_1 = fare_1+dataRow.train$Fare
+  }
+}
+
 miss_age_average = miss_age/n_miss
 mr_age_average = mr_age/n_mr
 Mrs_age_average = Mrs_age/n_Mrs
@@ -61,6 +79,10 @@ mr_age_average = round(mr_age_average, digits = 2)
 Mrs_age_average = round(Mrs_age_average, digits = 2)
 master_age_average = round(master_age_average, digits=2)
 all_average = round(all_average, digits=2)
+
+mean_fare_1 = round(mean(fare_1))
+mean_fare_2 = round(mean(fare_2))
+mean_fare_3 = round(mean(fare_3))
 
 for (i in 1:nrow(dataRow.train)){
   if (is.na(dataRow.train$Age[i])==TRUE){
@@ -83,7 +105,6 @@ for (i in 1:nrow(dataRow.train)){
 #MS=is.na.data.frame(dataRow.train$Age)
 #Missing_value=data.frame(t(MS))
 data.train <- model.frame(~ Survived + Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.train)
-data.test <- model.frame(~  Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.test)
 
 for (i in 1:nrow(data.train)){ 
   if (!grepl("C",data.train$Embarked[i]) && !grepl("Q",data.train$Embarked[i]) && !grepl("S",data.train$Embarked[i])){ 
@@ -97,3 +118,35 @@ library(randomForest)
 
 forestfit <- randomForest(Survived ~ ., data.train, ntree=5000)
 forestfit
+
+
+for (i in 1:nrow(dataRow.test)){
+  if (is.na(dataRow.test$Age[i])==TRUE){
+    if (grepl(chars_miss,dataRow.test$Name[i])==TRUE){
+      dataRow.train$Age[i] <- miss_age_average
+    }else if (grepl(chars_mr,dataRow.test$Name[i])==TRUE){
+      dataRow.test$Age[i] <- mr_age_average
+    }else if (grepl(chars_Mrs,dataRow.test$Name[i])==TRUE){
+      dataRow.test$Age[i] <- Mrs_age_average
+    }else if (grepl(chars_Master,dataRow.test$Name[i])==TRUE){
+      dataRow.test$Age[i] <- master_age_average
+    }else{
+      dataRow.test$Age[i] <- all_average
+    }
+  }
+}
+
+for (i in 1:nrow(dataRow.test)){
+  if (is.na(dataRow.test$Fare[i])==TRUE){
+    if (dataRow.test$Pclass[i]==1){
+      dataRow.test$Fare[i]<-mean_fare_1
+    } else if (dataRow.test$Pclass[i]==2){
+      dataRow.test$Fare[i]<-mean_fare_2
+    } else {
+      dataRow.test$Fare[i]<-mean_fare_3
+    }
+  }
+}
+
+data.test <- model.frame(~  Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.test)
+
