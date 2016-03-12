@@ -24,10 +24,10 @@ n_all <- 0
 for (i in 1:nrow(dataRow.train)){
   if (grepl(chars_miss,dataRow.train$Name[i])==TRUE){
     dataRow.train$grup[i] <- "Miss"
-  } else if (grepl(chars_mr,dataRow.train$Name[i])==TRUE){
-    dataRow.train$grup[i] <- "Mr"
   } else if (grepl(chars_Mrs,dataRow.train$Name[i])==TRUE){
     dataRow.train$grup[i] <- "Mrs"
+  } else if (grepl(chars_mr,dataRow.train$Name[i])==TRUE){
+    dataRow.train$grup[i] <- "Mr"
   } else if (grepl(chars_Master,dataRow.train$Name[i])==TRUE){
     dataRow.train$grup[i] <- "Master"
   } else {dataRow.train$grup[i] <- "other"}
