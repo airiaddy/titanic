@@ -1,7 +1,9 @@
+
+#read train & test file to table
 dataRow.train <- read.csv(file="train.csv", sep=",", header=T)
 dataRow.test <- read.csv(file="test.csv", sep=",", header=T)
 
-
+#find average age for each title (Miss, Mr, Mrs, Master)
 dataRow.name <- model.frame(~ Name + Age, data = dataRow.train)
 
 chars_miss <- "Miss"
@@ -49,6 +51,7 @@ for (i in 1:nrow(dataRow.name)){
   
 }
 
+#find average fare for each Pclass
 fare_3 <- 0
 
 fare_2 <- 0
@@ -113,6 +116,8 @@ for (i in 1:nrow(data.train)){
 }
 
 data.train$Survived <- as.factor(data.train$Survived)
+
+summary(data.train)
 
 library(randomForest)
 
