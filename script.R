@@ -171,4 +171,5 @@ svm.test.predicted <- predict(svm.model,data.test)
 
 
 result <- model.frame(~ PassengerId, data = dataRow.test)
-result$Survived <- predicted
+result$Survived <- svm.test.predicted
+write.csv(result, file = "svmprediction.csv",row.names=FALSE)
