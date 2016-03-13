@@ -86,14 +86,30 @@ mean_fare_1 = round(mean(fare_1))
 mean_fare_2 = round(mean(fare_2))
 mean_fare_3 = round(mean(fare_3))
 
+dataRow.train$Title = ''
+dataRow.train$FamilySize = 0
 for (i in 1:nrow(dataRow.train)){
+  if (grepl(chars_miss,dataRow.train$Name[i])==TRUE){
+    dataRow.train$Title[i] <- 'Miss'
+  }else if (grepl(chars_Mrs,dataRow.train$Name[i])==TRUE){
+    dataRow.train$Title[i] <- 'Mrs'
+  }else if (grepl(chars_mr,dataRow.train$Name[i])==TRUE){
+    dataRow.train$Title[i] <- 'Mr'
+  }else if (grepl(chars_Master,dataRow.train$Name[i])==TRUE){
+    dataRow.train$Title[i] <- 'Master'
+  }else{
+    dataRow.train$Title[i] <- 'Other'
+  }
+  dataRow.train$FamilySize[i] = dataRow.train$SibSp[i] + dataRow.train$Parch[i]
+  
+  #missing value handling
   if (is.na(dataRow.train$Age[i])==TRUE){
     if (grepl(chars_miss,dataRow.train$Name[i])==TRUE){
       dataRow.train$Age[i] <- miss_age_average
-    }else if (grepl(chars_mr,dataRow.train$Name[i])==TRUE){
-      dataRow.train$Age[i] <- mr_age_average
     }else if (grepl(chars_Mrs,dataRow.train$Name[i])==TRUE){
       dataRow.train$Age[i] <- Mrs_age_average
+    }else if (grepl(chars_mr,dataRow.train$Name[i])==TRUE){
+      dataRow.train$Age[i] <- mr_age_average
     }else if (grepl(chars_Master,dataRow.train$Name[i])==TRUE){
       dataRow.train$Age[i] <- master_age_average
     }else{
@@ -116,23 +132,39 @@ for (i in 1:nrow(dataRow.train)){
   }
 }
 
+data.train <- model.frame(~ Survived + Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + Title + FamilySize, data = dataRow.train)
+data.train$Survived <- as.factor(data.train$Survived)
+data.train$Embarked <- factor(data.train$Embarked)
+data.train$Title <- as.factor(data.train$Title)
 
 #cek missing value
 #MS=is.na.data.frame(dataRow.train$Age)
 #Missing_value=data.frame(t(MS))
 
-data.train <- model.frame(~ Survived + Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.train)
-data.train$Survived <- as.factor(data.train$Survived)
-data.train$Embarked <- factor(data.train$Embarked)
-
+dataRow.test$Title = ''
+dataRow.test$FamilySize = 0
 for (i in 1:nrow(dataRow.test)){
+  if (grepl(chars_miss,dataRow.test$Name[i])==TRUE){
+    dataRow.test$Title[i] <- 'Miss'
+  }else if (grepl(chars_Mrs,dataRow.test$Name[i])==TRUE){
+    dataRow.test$Title[i] <- 'Mrs'
+  }else if (grepl(chars_mr,dataRow.test$Name[i])==TRUE){
+    dataRow.test$Title[i] <- 'Mr'
+  }else if (grepl(chars_Master,dataRow.test$Name[i])==TRUE){
+    dataRow.test$Title[i] <- 'Master'
+  }else{
+    dataRow.test$Title[i] <- 'Other'
+  }
+  dataRow.test$FamilySize[i] = dataRow.test$SibSp[i] + dataRow.test$Parch[i]
+  
+  #missing value handling
   if (is.na(dataRow.test$Age[i])==TRUE){
     if (grepl(chars_miss,dataRow.test$Name[i])==TRUE){
       dataRow.test$Age[i] <- miss_age_average
-    }else if (grepl(chars_mr,dataRow.test$Name[i])==TRUE){
-      dataRow.test$Age[i] <- mr_age_average
     }else if (grepl(chars_Mrs,dataRow.test$Name[i])==TRUE){
       dataRow.test$Age[i] <- Mrs_age_average
+    }else if (grepl(chars_mr,dataRow.test$Name[i])==TRUE){
+      dataRow.test$Age[i] <- mr_age_average
     }else if (grepl(chars_Master,dataRow.test$Name[i])==TRUE){
       dataRow.test$Age[i] <- master_age_average
     }else{
@@ -150,26 +182,95 @@ for (i in 1:nrow(dataRow.test)){
     }
   }
 }
-data.test <- model.frame(~  Pclass + Sex + Age + SibSp + Fare + Embarked, data = dataRow.test)
+data.test <- model.frame(~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + Title + FamilySize, data = dataRow.test)
+data.test$Title <- as.factor(data.test$Title)
 
 summary(data.train)
 summary(data.test)
 
 #Random forest
 library(randomForest)
-forestfit <- randomForest(Survived ~ ., data.train, ntree=5000, mtry=3)
-forestfit
-forest.predicted <- predict(forestfit,data.test)
+rf.model <- randomForest(Survived ~ ., data.train, ntree=5000, mtry=3)
+rf.model
+rf.test.prediction <- predict(rf.model,data.test)
 
 #SVM
 library(e1071)
-svm.model <- svm(Survived ~ ., data.train,
-                 gamma = 10, cost = 100)
+
+#iseng-iseng pso
+#parameter
+n_par <- 10
+c_1 <- 2
+c_2 <- 2
+n_iter <- 20
+
+par <- data.frame(gamma = double(n_par), cost = double(n_par), fitness = double(n_par))
+pbest <- par
+
+#init particle
+for (i in 1:n_par) {
+  par$gamma[i] <- runif(1, 0, 5)
+  par$cost[i] <- runif(1, 0, 100)
+}
+
+gbest <- data.frame(gamma = double(n_iter), cost = double(n_iter), fitness = double(n_iter))
+
+i <- 1
+while (i <= n_iter) {
+  print(i)
+  #cari pbest dan gbest
+  print('hitung pbest dan gbest')
+  for (j in 1:n_par) {
+    par$fitness[j] <- mean(svm(Survived ~ ., data.train, cross=10, 
+                               gamma = par$gamma[j],
+                               cost = par$cost[j]
+    )$accuracies)
+    
+    if (par$fitness[j] > pbest$fitness[j]){
+      pbest[j,] = par[j,]
+    }
+    
+    if (par$fitness[j] > gbest$fitness[i]){
+      gbest[i,] = par[j,]
+    }
+  }
+  
+  print('hitung v dan update vektor setiap partikel')
+  #hitung v dan update vektor setiap partikel
+  for (j in 1:n_par) {
+    v_gamma <- par$gamma[j] + 
+      c_1 * runif(1, 0, 1) * (pbest$gamma[j] - par$gamma[j]) +
+      c_2 * runif(1, 0, 1) * (gbest$gamma[i] - par$gamma[j])
+    
+    v_cost <- par$cost[j] + 
+      c_1 * runif(1, 0, 1) * (pbest$cost[j] - par$cost[j]) +
+      c_2 * runif(1, 0, 1) * (gbest$cost[i] - par$cost[j])
+    
+    par$gamma[j] <- par$gamma[j] + v_gamma
+    par$cost[j] <- par$cost[j] + v_cost
+    
+    if (par$gamma[j] <= 0){
+      par$gamma[j] <- 1e-5
+    }
+    if (par$cost[j] <= 0){
+      par$cost[j] <- 1e-5
+    }
+  }
+  
+  i<-i+1
+}
+
+
+svm.model <- svm(Survived ~ ., data.train, cross=10, gamma = gbest$gamma[i-1], cost = gbest$cost[i-1])
 svm.train.predicted <- predict(svm.model,data.train)
 table(true = data.train$Survived, pred = svm.train.predicted)
-svm.test.predicted <- predict(svm.model,data.test)
+mean(svm.model$accuracies)
+svm.test.prediction <- predict(svm.model,data.test)
 
+rf.result <- model.frame(~ PassengerId, data = dataRow.test)
+rf.result$Survived <- rf.test.prediction
+write.csv(rf.result, file = "rfprediction.csv",row.names=FALSE)
 
-result <- model.frame(~ PassengerId, data = dataRow.test)
-result$Survived <- svm.test.predicted
-write.csv(result, file = "svmprediction.csv",row.names=FALSE)
+svm.result <- model.frame(~ PassengerId, data = dataRow.test)
+svm.result$Survived <- svm.test.prediction
+write.csv(svm.result, file = "svmprediction.csv",row.names=FALSE)
