@@ -188,6 +188,9 @@ data.test$Title <- as.factor(data.test$Title)
 summary(data.train)
 summary(data.test)
 
+write.csv(data.train, file = "train-preprocessed.csv",row.names=FALSE)
+write.csv(data.test, file = "test-preprocessed.csv",row.names=FALSE)
+
 #Random forest
 library(randomForest)
 rf.model <- randomForest(Survived ~ ., data.train, ntree=5000, mtry=3)
@@ -200,8 +203,8 @@ library(e1071)
 #iseng-iseng pso
 #parameter
 n_par <- 10
-c_1 <- 2
-c_2 <- 2
+c_1 <- 1
+c_2 <- 3
 n_iter <- 20
 
 par <- data.frame(gamma = double(n_par), cost = double(n_par), fitness = double(n_par))
@@ -209,8 +212,8 @@ pbest <- par
 
 #init particle
 for (i in 1:n_par) {
-  par$gamma[i] <- runif(1, 0, 5)
-  par$cost[i] <- runif(1, 0, 100)
+  par$gamma[i] <- runif(1, 0, 1)
+  par$cost[i] <- runif(1, 0, 5000)
 }
 
 gbest <- data.frame(gamma = double(n_iter), cost = double(n_iter), fitness = double(n_iter))
@@ -225,6 +228,7 @@ while (i <= n_iter) {
                                gamma = par$gamma[j],
                                cost = par$cost[j]
     )$accuracies)
+    
     
     if (par$fitness[j] > pbest$fitness[j]){
       pbest[j,] = par[j,]
@@ -259,7 +263,6 @@ while (i <= n_iter) {
   
   i<-i+1
 }
-
 
 svm.model <- svm(Survived ~ ., data.train, cross=10, gamma = gbest$gamma[i-1], cost = gbest$cost[i-1])
 svm.train.predicted <- predict(svm.model,data.train)
